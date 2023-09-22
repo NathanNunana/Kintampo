@@ -102,6 +102,16 @@ const login = async (req, res) => {
   }
 };
 
-// Other controllers and routes...
+const getUsers = async (req, res) => {
+  try {
+    const query = "SELECT * FROM users";
+    const result = await pool.query(query);
+    const users = result.rows;
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
 
-module.exports = { register, login };
+module.exports = { register, login, getUsers };

@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const {
   register,
-  login
+  login,
+  getUsers
 } = require("../controllers/user");
 
 const { body } = require("express-validator");
@@ -17,5 +18,7 @@ const validationRules = [
 router.post("/register", validationRules, register);
 
 router.post("/login", validationRules, login);
+
+router.get("/users", getUsers);
 
 module.exports = router;

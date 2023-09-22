@@ -8,6 +8,22 @@ const createTransaction = async (req, res) => {
     const getUserPinQuery = "SELECT pin FROM users WHERE username = $1";
     const userPinResult = await db.query(getUserPinQuery, [username]);
 
+    const getUserAccountQuery = "SELECT * FROM users WHERE account_number = $1";
+    const userAccountResult = await db.query(getUserAccountQuery, [account_number]);
+
+    
+    const getUserMatchAccountQuery = "SELECT * FROM users WHERE account_number=$1 AND username=$2";
+    const userAccountMatchResult = await db.query(getUserMatchAccountQuery, [account_number, username]);
+
+
+    if(userAccountResult.rows.length === 0){
+      return res.status(404).json({ error: "Account does not exist not found" });
+    }
+
+    if(userAccountMatchResult.rows.length !== 0){
+      return res.status(404).json({ error: "You can't make a transaction to your own account" });
+    }
+
     if (userPinResult.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -19,12 +35,15 @@ const createTransaction = async (req, res) => {
     }
 
     const createTransQuery =
-      "INSERT INTO transactions (account_number, amount, status) " +
-      "VALUES ($1, $2, $3) RETURNING transaction_id";
+      "INSERT INTO transactions (username, account_number, amount, status) " +
+      "VALUES ($1, $2, $3, $4) RETURNING transaction_id";
 
-    const values = [account_number, amount, status];
+    const values = [username, account_number, amount, status];
 
     const result = await db.query(createTransQuery, values);
+
+    const updateQuery = "UPDATE users SET current_balance=current_balance+$1 WHERE account_number=$2";
+    await db.query(updateQuery, [parseInt(amount), account_number]);
 
     const newTransaction = result.rows[0];
     res.status(201).json(newTransaction);
@@ -46,7 +65,22 @@ const allTransaction = async (req, res) => {
   }
 };
 
+const getTransactionByName = async (req, res) => {
+  const {username} = req.params;
+  console.log(username)
+  try {
+    const query = "SELECT * FROM transactions WHERE username=$1";
+    const result = await db.query(query, [username]);
+    const transactions = result.rows;
+    res.json(transactions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 module.exports = {
   createTransaction,
   allTransaction,
+  getTransactionByName,
 };
