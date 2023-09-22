@@ -10,7 +10,7 @@ require("dotenv").config({ path: ".env" });
 require("./connections/db");
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://example.com'],
+  origin: ['http://localhost:3000', 'https://kintampo.netlify.app/'],
   credentials: true,
 };
 
