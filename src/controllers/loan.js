@@ -76,7 +76,6 @@ const acceptLoan = async (req, res) => {
     // Fetch the user's current balance
     const getUserBalanceQuery = "SELECT current_balance FROM users WHERE id = $1;";
     const getUserBalanceResult = await db.query(getUserBalanceQuery, [userId]);
-    
 
     if (getUserBalanceResult.rows.length === 0) {
       return res.status(404).json({ success: false, error: "User not found" });
