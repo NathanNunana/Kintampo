@@ -54,6 +54,11 @@ const createTransaction = async (req, res) => {
       "UPDATE users SET current_balance=current_balance+$1 WHERE account_number=$2";
     await db.query(updateQuery, [parseInt(amount), account_number]);
 
+    const updateSenderQuery =
+      "UPDATE users SET current_balance=current_balance-$1 WHERE username=$2";
+    await db.query(updateSenderQuery, [parseInt(amount), username]);
+
+
     // Create a record for the recipient with status "Received"
     const recipientUsernameQuery =
       "SELECT username FROM users WHERE account_number = $1";
