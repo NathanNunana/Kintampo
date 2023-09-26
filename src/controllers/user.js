@@ -114,4 +114,70 @@ const getUsers = async (req, res) => {
   }
 }
 
-module.exports = { register, login, getUsers };
+const updatePin = async (req, res) => {
+  const { userId, oldPin, newPin } = req.body;
+  try {
+    // Query the user's current PIN from the database
+    const getUserPinQuery = "SELECT pin FROM users WHERE id = $1";
+    const userPinResult = await pool.query(getUserPinQuery, [userId]);
+
+    if (userPinResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const currentPin = userPinResult.rows[0].pin;
+
+    // Compare the provided oldPin with the user's current PIN
+    if (oldPin !== currentPin) {
+      return res.status(401).json({ success: false, error: "Old PIN is invalid" });
+    }
+
+    // Update the user's PIN in the database
+    const updatePinQuery = "UPDATE users SET pin = $1 WHERE id = $2";
+    await pool.query(updatePinQuery, [newPin, userId]);
+
+    res.status(200).json({ success: true, message: "PIN updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
+
+
+const updatePassword = async (req, res) => {
+  const { userId, oldPassword, newPassword } = req.body;
+
+  try {
+    // Query the user's hashed password from the database
+    const getUserPasswordQuery = "SELECT password FROM users WHERE id = $1";
+    const userPasswordResult = await pool.query(getUserPasswordQuery, [userId]);
+
+    if (userPasswordResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const currentPasswordHash = userPasswordResult.rows[0].password;
+
+    // Compare the provided oldPassword with the user's current hashed password
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, currentPasswordHash);
+
+    if (!isOldPasswordValid) {
+      return res.status(401).json({ success: false, error: "Old password is invalid" });
+    }
+
+    // Hash the new password before updating it in the database
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password in the database
+    const updatePasswordQuery = "UPDATE users SET password = $1 WHERE id = $2";
+    await pool.query(updatePasswordQuery, [hashedNewPassword, userId]);
+
+    res.status(200).json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+};
+
+
+module.exports = { register, login, getUsers, updatePin, updatePassword };
